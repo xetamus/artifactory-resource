@@ -60,7 +60,9 @@ fi
 file_pattern=$(echo $regex | sed 's/(.*)/*/')
 search_pattern=$(create_artifact_path $file_pattern $repository $folder)
 
-file_json=$(in_file_with_version "$final_url" "$regex" "$version")
+configure_jfrog_client $endpoint $username $password
+
+file_json=$(in_file_with_version "$search_pattern" "$regex" "$version")
 file=$(echo $file_json | jq -r '.[].uri')
 
 if [ -z "$file" ]; then
@@ -69,16 +71,15 @@ if [ -z "$file" ]; then
 fi
 
 explode_params=""
-if [ -n "$explode" ]; then
+if [ -n "${explode}" ]; then
   $explode_params="--explode=${explode}"
 fi
 
 thread_params=""
-if [ -n "$threads" ]; then
+if [ -n "${threads}" ]; then
   $thread_params="--threads=${threads}"
 fi
 
-configure_jfrog_client $endpoint $username $password
 $ARTIFACTORY_CMD dl $explode_params $thread_params $full_path
 
 echo $file_json | jq '.[].version | {version: {version: .}}' >&3
