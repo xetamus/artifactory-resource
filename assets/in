@@ -24,7 +24,7 @@ endpoint=$(jq -r '.source.endpoint // ""' < $payload)
 regex=$(jq -r '.source.regex // ""' < $payload)
 username=$(jq -r '.source.username // ""' < $payload)
 password=$(jq -r '.source.password // ""' < $payload)
-skip_ssl_verification=$(jq -r '.source.skip_ssl_verification // ""' < $payload)
+ca_cert=$(jq -r '.source.ca_cert // ""' < $payload)
 
 repository=$(jq -r '.source.repository // ""' < $payload)
 file=$(jq -r '.params.file // ""' < $payload)
@@ -32,6 +32,9 @@ folder=$(jq -r '.params.folder // ""' < $payload)
 paramRegex=$(jq -r '.params.regex // ""' < $payload)
 
 version=$(jq -r '.version.version // ""' < $payload)
+
+explode=$(jq -r '.params.explode // ""' < $payload)
+threads=$(jq -r '.params.threads // ""' < $payload)
 
 if [ -z "$endpoint" ]; then
   echo "invalid payload (missing endpoint)"
@@ -48,23 +51,14 @@ if [ -z "$version" ]; then
   exit 1
 fi
 
-# Building CURL request
-args_url="$endpoint/api/storage$repository$folder"
-
-args_security=
-
-[ -n "$username" ] && args_security="-u $username";
-[ -n "$password" ] && args_security="$args_security:$password";
-trueValue="true"
-[ -n "$skip_ssl_verification" ] && [ "${skip_ssl_verification,,}" = "${trueValue,,}" ] && args_security="$args_security -k";
-
 if [ -n "$paramRegex" ]; then
   echo "overwriting source regex"
   regex=$paramRegex
 fi
 
-final_url=$(echo "$args_security" " $args_url")
-# echo $final_url
+# Convert version matcher to a regular wildcard character
+file_pattern=$(echo $regex | sed 's/(.*)/*/')
+search_pattern=$(create_artifact_path $file_pattern $repository $folder)
 
 file_json=$(in_file_with_version "$final_url" "$regex" "$version")
 file=$(echo $file_json | jq -r '.[].uri')
@@ -74,9 +68,17 @@ if [ -z "$file" ]; then
   exit 1
 fi
 
-args_url="$endpoint$repository/$file"
+explode_params=""
+if [ -n "$explode" ]; then
+  $explode_params="--explode=${explode}"
+fi
 
-# echo $args_security "-O" "$args_url"
-curl $args_security "-O" "$args_url"
+thread_params=""
+if [ -n "$threads" ]; then
+  $thread_params="--threads=${threads}"
+fi
+
+configure_jfrog_client $endpoint $username $password
+$ARTIFACTORY_CMD dl $explode_params $thread_params $full_path
 
 echo $file_json | jq '.[].version | {version: {version: .}}' >&3

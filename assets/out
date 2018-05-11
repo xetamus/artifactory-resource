@@ -24,8 +24,7 @@ endpoint=$(jq -r '.source.endpoint // ""' < $payload)
 regex=$(jq -r '.source.regex // ""' < $payload)
 username=$(jq -r '.source.username // ""' < $payload)
 password=$(jq -r '.source.password // ""' < $payload)
-skip_ssl_verification=$(jq -r '.source.skip_ssl_verification // ""' < $payload)
-
+ca_cert=$(jq -r '.source.ca_cert // ""' < $payload)
 repository=$(jq -r '.source.repository // ""' < $payload)
 folder=$(jq -r '.params.folder // ""' < $payload)
 file=$(jq -r '.params.file // ""' < $payload)
@@ -46,32 +45,15 @@ if [ -z "$file" ]; then
   exit 1
 fi
 
-abs_file=$(ls $file)
-filename=$(basename "$abs_file")
+artifact_path=$(ls $file)
+filename=$(basename "$artifact_path")
 
-
-args_url="$endpoint"
-args_url="$args_url$repository"
-
-if [ -n "$folder" ]; then
-	echo "adding parameter folder"
-	args_url="$args_url/$folder"
-fi
-
-args_url="$args_url/$filename"
-
-args_security=
-
-[ -n "$username" ] && args_security="-u $username";
-[ -n "$password" ] && args_security="$args_security:$password";
-trueValue="true"
-[ -n "$skip_ssl_verification" ] && [ "${skip_ssl_verification,,}" = "${trueValue,,}" ] && args_security="$args_security -k";
+target_path=$(create_artifact_path $filename $repository $folder)
 
 # echo "########## $filename, $file"
 
-# echo $args_security "-T $abs_file $args_url "
-curl $args_security "-T$abs_file" "$args_url"
-
+configure_jfrog_client $endpoint $username $password
+$ARTIFACTORY_CMD u $abs_file $target_path
 
 # echo $file $regex
 version=$(applyRegex_version $regex $filename)

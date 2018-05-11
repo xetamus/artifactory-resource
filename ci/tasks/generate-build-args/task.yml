@@ -1,0 +1,22 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: alpine
+
+inputs:
+  - name: jfrog-cli
+  - name: artifactory-resource-repo
+
+outputs:
+  - name: build-args
+
+run:
+  path: sh
+  args:
+  - -exc
+  - |
+    echo '{"JFROG_CLI_VERSION": "$(cat jfrog-cli/version)"}' > build-args/build-args.json
+    cat jfrog-cli/version > build-args/version
