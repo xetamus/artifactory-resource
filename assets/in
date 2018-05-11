@@ -63,7 +63,7 @@ search_pattern=$(create_artifact_path $file_pattern $repository $folder)
 configure_jfrog_client $endpoint $username $password
 
 file_json=$(in_file_with_version "$search_pattern" "$regex" "$version")
-file=$(echo $file_json | jq -r '.[].uri')
+file=$(echo $file_json | jq -r '.[].path')
 
 if [ -z "$file" ]; then
   echo "file for version '$version' not found"
@@ -80,6 +80,8 @@ if [ -n "${threads}" ]; then
   $thread_params="--threads=${threads}"
 fi
 
-$ARTIFACTORY_CMD dl $explode_params $thread_params $full_path
+full_path=$(create_artifact_path $file $repository $folder)
+
+$ARTIFACTORY_CMD dl $explode_params $thread_params "${full_path}"
 
 echo $file_json | jq '.[].version | {version: {version: .}}' >&3
