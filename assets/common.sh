@@ -14,10 +14,10 @@ create_artifact_path() {
   local repository=$2
   local folder=$3 # Needs to be last as it may not be provided
 
-  if [ -n $folder ]; then
-    search_pattern="$repository/$folder/$file_pattern"
+  if [ -n "${folder}" ]; then
+    echo "${repository}/${folder}/${file_pattern}"
   else
-    search_pattern="$repository/$file_pattern"
+    echo "${repository}/${file_pattern}"
   fi
 }
 
