@@ -18,5 +18,5 @@ run:
   args:
   - -exc
   - |
-    echo '{"JFROG_CLI_VERSION": "$(cat jfrog-cli/version)"}' > build-args/build-args.json
+    jq -n --arg version $(cat jfrog-cli/version) '{"JFROG_CLI_VERSION": $version}' > build-args/build-args.json
     cat jfrog-cli/version > build-args/version
