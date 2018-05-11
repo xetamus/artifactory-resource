@@ -4,7 +4,8 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: alpine
+    repository: concourse/buildroot
+    tag: curl-jq
 
 inputs:
   - name: jfrog-cli
