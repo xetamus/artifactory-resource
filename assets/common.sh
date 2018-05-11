@@ -35,7 +35,7 @@ get_current_version() {
   local regex=$1
   local folder_contents=$2
 
-  echo "$folder_contents" | jq --arg v "$regex" '[.children[].uri | capture($v)]' | jq 'sort_by(.version | split(".") | map(tonumber))' | jq '[.[length-1] | {version: .version}]'
+  echo "$folder_contents" | jq --arg v "$regex" '[.children[].path | capture($v)]' | jq 'sort_by(.version | split(".") | map(tonumber))' | jq '[.[length-1] | {version: .version}]'
 }
 
 # Return all versions
@@ -43,7 +43,7 @@ get_all_versions() {
   local regex=$1
   local folder_contents=$2
 
-  echo "$folder_contents" | jq --arg v "$regex" '[.children[].uri | capture($v)]' | jq 'sort_by(.version | split(".") | map(tonumber))' | jq '[.[] | {version: .version}]'
+  echo "$folder_contents" | jq --arg v "$regex" '[.children[].path | capture($v)]' | jq 'sort_by(.version | split(".") | map(tonumber))' | jq '[.[] | {version: .version}]'
 }
 
 get_files() {
@@ -94,7 +94,7 @@ artifactory_files() {
 
 in_file_with_version() {
   local search_pattern=$1
-  local regex="(?<uri>$2)"
+  local regex="(?<path>$2)"
   local version=$3
 
   result=$(artifactory_files "$search_pattern" "$regex")
