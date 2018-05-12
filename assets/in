@@ -46,11 +46,6 @@ if [ -z "$repository" ]; then
   exit 1
 fi
 
-if [ -z "$version" ]; then
-  echo "Missing version"
-  exit 1
-fi
-
 if [ -n "$paramRegex" ]; then
   echo "overwriting source regex"
   regex=$paramRegex
@@ -62,6 +57,11 @@ search_pattern=$(create_artifact_path $file_pattern $repository $folder)
 
 configure_jfrog_client $endpoint $username $password
 
+if [ -z "$version" ]; then
+  echo "empty version - return current version"
+  version=$(artifactory_current_version "$search_pattern" "$regex" | jq -r '.[].version')
+fi
+
 file_json=$(in_file_with_version "$search_pattern" "$regex" "$version")
 file=$(echo $file_json | jq -r '.[].path')
 
@@ -72,12 +72,12 @@ fi
 
 explode_params=""
 if [ -n "${explode}" ]; then
-  $explode_params="--explode=${explode}"
+  explode_params="--explode=${explode}"
 fi
 
 thread_params=""
 if [ -n "${threads}" ]; then
-  $thread_params="--threads=${threads}"
+  thread_params="--threads=${threads}"
 fi
 
 full_path=$(create_artifact_path $file $repository $folder)

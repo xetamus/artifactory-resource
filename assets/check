@@ -45,7 +45,7 @@ search_pattern=$(create_artifact_path $regex $repository $folder)
 
 configure_jfrog_client $endpoint $username $password
 
-if [ -z "$version" ]; then
+if [ -z "${version}" ]; then
   echo "empty version - return current version"
   artifactory_current_version "$search_pattern" "$regex" >&3
 else
